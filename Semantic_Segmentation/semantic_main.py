@@ -189,6 +189,14 @@ def semantic_main(**kwargs):
             else:
                 inputs = Variable(inputs)
 
+            # sketchyscene change: we need to scale the inputs to ([0.0-255.0]-mean),
+            # following the TF model
+            inputs = torch.transpose(torch.transpose(inputs, 0, 2), 0, 1)  # [H, W, 3]
+            inputs = inputs * 255.0
+            for i in range(3):
+                inputs[:, :, i] = inputs[:, :, i] - config.mean[i]
+            inputs = torch.transpose(torch.transpose(inputs, 1, 0), 2, 0)  # [3, H, W]
+
             # load gt_label
             label_name = 'sample_' + str(image_idx) + '_class.mat'  # e.g. sample_1_class.mat
             label_path = os.path.join(config.data_base_dir, mode, 'CLASS_GT', label_name)

@@ -191,11 +191,11 @@ def semantic_main(**kwargs):
 
             # sketchyscene change: we need to scale the inputs to ([0.0-255.0]-mean),
             # following the TF model
-            inputs = torch.transpose(torch.transpose(inputs, 0, 2), 0, 1)  # [H, W, 3]
+            inputs = inputs.permute(1, 2, 0)  # [H, W, 3]
             inputs = inputs * 255.0
             for i in range(3):
                 inputs[:, :, i] = inputs[:, :, i] - config.mean[i]
-            inputs = torch.transpose(torch.transpose(inputs, 1, 0), 2, 0)  # [3, H, W]
+            inputs = inputs.permute(2, 0, 1)  # [3, H, W]
 
             # load gt_label
             label_name = 'sample_' + str(image_idx) + '_class.mat'  # e.g. sample_1_class.mat
@@ -307,11 +307,11 @@ def semantic_main(**kwargs):
 
             # sketchyscene change: we need to scale the inputs to ([0.0-255.0]-mean),
             # following the TF model
-            inputs = torch.transpose(torch.transpose(inputs, 0, 2), 0, 1)  # [H, W, 3]
+            inputs = inputs.permute(1, 2, 0)  # [H, W, 3]
             inputs = inputs * 255.0
             for i in range(3):
                 inputs[:, :, i] = inputs[:, :, i] - config.mean[i]
-            inputs = torch.transpose(torch.transpose(inputs, 1, 0), 2, 0)  # [3, H, W]
+            inputs = inputs.permute(2, 0, 1)  # [3, H, W]
 
             outputs = model(inputs.unsqueeze(0))
             if config.upsample_mode == 'deconv':
@@ -436,11 +436,11 @@ def semantic_main(**kwargs):
 
         # sketchyscene change: we need to scale the inputs to ([0.0-255.0]-mean),
         # following the TF model
-        inputs = torch.transpose(torch.transpose(inputs, 0, 2), 0, 1)  # [H, W, 3]
+        inputs = inputs.permute(1, 2, 0)  # [H, W, 3]
         inputs = inputs * 255.0
         for i in range(3):
             inputs[:, :, i] = inputs[:, :, i] - config.mean[i]
-        inputs = torch.transpose(torch.transpose(inputs, 1, 0), 2, 0)  # [3, H, W]
+        inputs = inputs.permute(2, 0, 1)  # [3, H, W]
 
         outputs = model(inputs.unsqueeze(0))
         if config.upsample_mode == 'deconv':

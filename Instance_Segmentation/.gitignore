@@ -1,0 +1,16 @@
+.idea/
+.idea
+logs/
+*.pth
+*.h5
+*.so
+*.pyc
+*.o
+*_ext*
+
+outputs/
+
+# temporary files
+*.txt~
+.DS_Store
+.gitignore~

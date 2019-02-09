@@ -123,7 +123,7 @@ See the code under `Instance_Segmentation` directory.
 
 - Download the whole [SketchyScene dataset](https://github.com/SketchyScene/SketchyScene) and place them under `data` directory following its instructions.
 - Download the coco/imagenet pre-trained model following the instructions under `Instance_Segmentation/pretrained_model`. 
-- We provide the implementation of converting our [trained Keras(Tensorflow) model](https://drive.google.com/drive/folders/11sI3IARgAKTf4rut1isQgTOdGKFeyZ1c) to pytorch model, see [this section](#model-conversion).
+- We provide the implementation of converting our [trained Keras(Tensorflow) model](https://drive.google.com/drive/folders/11sI3IARgAKTf4rut1isQgTOdGKFeyZ1c?usp=sharing) to pytorch model, see [this section](#model-conversion-1).
 - Setup the Non-Maximum Suppression (from [ruotianluo/pytorch-faster-rcnn](https://github.com/ruotianluo/pytorch-faster-rcnn)) and RoiAlign (from [longcw/RoIAlign.pytorch](https://github.com/longcw/RoIAlign.pytorch)) environment as following:
   ```
   cd libs/nms/src/cuda/
@@ -158,7 +158,7 @@ python3 segment_train.py --init_model='coco' --log_info=1
 ```
 
 - Choose the initial pre-trained model from [*'coco'*, *'imagenet'*, *'last'*] at `--init_model`. Train from the fresh start if not specified. *'last'* denotes your lastly trained model.
-- `--log_info=1` means log infomation will be summarized and you can check with Tensorboard. **Note** that this requires tensorflow and tensorboard environment. This function benifits from [`logger.py`](https://github.com/MarkMoHR/SketchyScene-pytorch/blob/master/Semantic_Segmentation/tools/logger.py).
+- `--log_info=1` means log infomation will be summarized and you can check with Tensorboard. **Note** that this requires tensorflow and tensorboard environment. This function benifits from [`logger.py`](https://github.com/MarkMoHR/SketchyScene-pytorch/blob/master/Instance_Segmentation/tools/logger.py).
 - Other settings can be modified at `SketchTrainConfig` in this file.
 
 
@@ -175,7 +175,7 @@ python3 segment_evaluate.py --dataset='val' --epochs='0100' --use_edgelist=1
 - Set `--epochs` to the last four digits of the name of your trained model.
 - Edgelist is used if setting `--use_edgelist=1`. **Note** that if you want to use edgelist as post-processing, make sure you have generated the edgelist labels following the instructions under `Instance_Segmentation/libs/edgelist_utils_matlab`. 
 
-You can convert the keras(tensorflow) trained model following [this section](#model-conversion) or directly download [here](https://drive.google.com/drive/folders/1em6S6HU0r6_UuWse4n2stbJbAJG8F_Rg?usp=sharing).
+You can convert the keras(tensorflow) trained model following [this section](#model-conversion-1) or directly download [here](https://drive.google.com/drive/folders/1em6S6HU0r6_UuWse4n2stbJbAJG8F_Rg?usp=sharing).
 
 
 ### Inference
@@ -195,7 +195,7 @@ Also, you can try [converted pytorch model](https://drive.google.com/drive/folde
 
 ### Model Conversion
 
-We provide the implementation of converting our [trained keras(tensorflow) model](https://drive.google.com/drive/folders/11sI3IARgAKTf4rut1isQgTOdGKFeyZ1c) to pytorch model. 
+We provide the implementation of converting our [trained keras(tensorflow) model](https://drive.google.com/drive/folders/11sI3IARgAKTf4rut1isQgTOdGKFeyZ1c?usp=sharing) to pytorch model. 
 
 Run the [`convert_from_keras.py`](https://github.com/MarkMoHR/SketchyScene-pytorch/blob/master/Instance_Segmentation/tools/convert_from_keras.py) under `tools` folder like this:
 

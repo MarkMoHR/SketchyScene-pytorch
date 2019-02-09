@@ -1799,23 +1799,24 @@ class MaskRCNN(nn.Module):
             raise NameError("Unknown optimizer type %s!" % self.config.TRAIN_OPTIMIZER)
 
         # Training
+        losses_name = ['rpn_class_loss', 'rpn_bbox_loss', 'mrcnn_class_loss', 'mrcnn_bbox_loss', 'mrcnn_mask_loss']
+
         for epoch in range(self.epoch + 1, epochs + 1):
             log("Epoch {}/{}.".format(epoch, epochs))
             epoch_loss = 0
-            epoch_loss_div = np.zeros([5])
+            epoch_loss_div = [0 for _ in range(len(losses_name))]
             step = 0
             start_time = time.time()
 
             for inputs in train_generator:
                 optimizer.zero_grad()
-                losses = Variable(torch.zeros([5], dtype=torch.float32), requires_grad=False)
+                losses = [0 for _ in range(len(losses_name))]
                 images, image_metas_batch, rpn_match_batch, rpn_bbox_batch, gt_class_ids_batch, \
                 gt_boxes_batch, gt_masks_batch, gt_bin_drawings_batch = inputs
                 # from list to tensor
                 images = torch.stack(images)
                 if self.config.GPU_COUNT:
                     images = images.cuda()
-                    losses = losses.cuda()
 
                 # Feature extraction
                 [p2_out, p3_out, p4_out, p5_out, p6_out] = self.fpn(images)
@@ -1886,10 +1887,10 @@ class MaskRCNN(nn.Module):
 
                     # compute rpn_rois
                     rpn_rois = proposal_layer([rpn_class, rpn_pred_bbox],
-                                                  proposal_count=proposal_count,
-                                                  nms_threshold=self.config.RPN_NMS_THRESHOLD,
-                                                  anchors=self.anchors,
-                                                  config=self.config)
+                                              proposal_count=proposal_count,
+                                              nms_threshold=self.config.RPN_NMS_THRESHOLD,
+                                              anchors=self.anchors,
+                                              config=self.config)
 
                     # Normalize coordinates
                     h, w = self.config.IMAGE_SHAPE[:2]
@@ -1930,40 +1931,35 @@ class MaskRCNN(nn.Module):
                         rpn_match, rpn_bbox, rpn_class_logits, rpn_pred_bbox, target_class_ids, mrcnn_class_logits,
                         target_deltas, mrcnn_bbox, target_mask, mrcnn_mask, target_bin_drawings,
                         ignore_bg=self.config.IGNORE_BG)
-                    img_loss = torch.Tensor([rpn_class_loss, rpn_bbox_loss, mrcnn_class_loss, mrcnn_bbox_loss, mrcnn_mask_loss])
-                    if self.config.GPU_COUNT:
-                        img_loss = img_loss.cuda()
-                    losses += img_loss
+                    loss_list = [rpn_class_loss, rpn_bbox_loss, mrcnn_class_loss, mrcnn_bbox_loss, mrcnn_mask_loss]
+                    for i in range(len(loss_list)):
+                        losses[i] += loss_list[i]
 
                 step = step + 1
-                losses /= self.config.BATCH_SIZE
-                losses.requires_grad = True
-                print("===> Epoch[{}]({}/{}): Loss: rpn_class_loss: {:.4f}, rpn_bbox_loss: {:.4f}, mrcnn_class_loss: {:.4f}, mrcnn_bbox_loss: {:.4f}, mrcnn_mask_loss: {:.4f}, "
-                      .format(epoch, step, self.config.STEPS_PER_EPOCH, losses[0].item(), losses[1].item(),
-                              losses[2].item(), losses[3].item(), losses[4].item()))
+                loss = 0
 
-                loss = torch.sum(losses)
+                log_str = "===> Epoch[{}]({}/{}): Loss: ".format(epoch, step, self.config.STEPS_PER_EPOCH)
+                for i in range(len(losses)):
+                    log_str += "{}: {:.4f}, ".format(losses_name[i], losses[i].item() / self.config.BATCH_SIZE)
+                    loss += losses[i] / self.config.BATCH_SIZE
+                    epoch_loss_div[i] += losses[i].item() / self.config.BATCH_SIZE
+
+                log(log_str)
+
                 loss.backward()
                 # TODO: need to find an appropriate number for 'clip'
                 torch.nn.utils.clip_grad_norm_(self.parameters(), 5.0)
                 optimizer.step()
                 epoch_loss += loss.item()
-                if self.config.GPU_COUNT:
-                    epoch_loss_div += losses.data.cpu().numpy()
-                else:
-                    epoch_loss_div += losses.detach().numpy()
+
                 if step % self.config.STEPS_PER_EPOCH == 0:
                     epoch_loss /= self.config.STEPS_PER_EPOCH
-                    epoch_loss_div /= self.config.STEPS_PER_EPOCH
 
                     # summary
                     if logger is not None:
                         logger.scalar_summary('loss', epoch_loss, epoch)
-                        logger.scalar_summary('rpn_class_loss', epoch_loss_div[0], epoch)
-                        logger.scalar_summary('rpn_bbox_loss', epoch_loss_div[1], epoch)
-                        logger.scalar_summary('mrcnn_class_loss', epoch_loss_div[2], epoch)
-                        logger.scalar_summary('mrcnn_bbox_loss', epoch_loss_div[3], epoch)
-                        logger.scalar_summary('mrcnn_mask_loss', epoch_loss_div[4], epoch)
+                        for i in range(len(losses_name)):
+                            logger.scalar_summary(losses_name[i], epoch_loss_div[i] / self.config.STEPS_PER_EPOCH, epoch)
 
                     print("===> Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch, epoch_loss))
 
